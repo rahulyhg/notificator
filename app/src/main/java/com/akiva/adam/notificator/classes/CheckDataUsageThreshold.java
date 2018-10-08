@@ -10,10 +10,11 @@ import java.util.TimerTask;
 import static com.akiva.adam.notificator.activities.MyActivity.CHECK_TIME_THRESHOLD;
 import static com.akiva.adam.notificator.activities.MyActivity.THRESHOLD_FOR_DATA_USAGE;
 
+// Extension of timer task that checks every given time if the data usage threshold has been reached and if it was send user notification
 public class CheckDataUsageThreshold extends TimerTask {
 
     private final Context context;
-    private final IProcess process;
+    private final IProcess process;  // the process which we want to check the data usage threshold
 
     public static final String TAG = CheckDataUsageThreshold.class.getName();
 
@@ -25,7 +26,7 @@ public class CheckDataUsageThreshold extends TimerTask {
     @Override
     public void run() {
         if (process.getCurrentDataUsage() - process.getLastDataThreshold() >= THRESHOLD_FOR_DATA_USAGE) {
-            int dataUsageInGivenTimeInMb = (int) ((process.getCurrentDataUsage() - process.getLastDataThreshold()) / 1000000);
+            int dataUsageInGivenTimeInMb = (int) ((process.getCurrentDataUsage() - process.getLastDataThreshold()) / 1000000);  // bytes to mb
             Notification notification = new Notification(context);
             notification.createNewNotification(process, dataUsageInGivenTimeInMb);
             Log.d(TAG, String.format(TAG + ": App used more than %d mb in the last %d minutes", (THRESHOLD_FOR_DATA_USAGE / 100000), CHECK_TIME_THRESHOLD));

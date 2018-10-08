@@ -27,6 +27,8 @@ import javax.inject.Inject;
 import static com.akiva.adam.notificator.activities.MyActivity.SLEEP_TIME_FOR_WIFI_CHECK_CONNECTION;
 import static com.akiva.adam.notificator.activities.MyActivity.TIMER_TASK_CHECK_RATE;
 
+// A service that checks the data usage of indicated apps and if they pass
+// a given mobile data threshold display a notification for the user
 public class MainService extends Service {
 
     @Inject
@@ -44,13 +46,19 @@ public class MainService extends Service {
 
         ((MyApp) getApplicationContext()).getDatabaseComponent().inject(this);
 
+        // get a unique id each reboot or whenever the service is destroyed
+        // to used the data used by a program in a database
         uniqueId = UUID.randomUUID().toString();
 
+        // If the phone version is >= 26 create a notification channel
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Notification.createNotificationChannel(this);
             //startForeground();
         }
 
+        // A thread which checks that checks it runs only once and that the wifi is offline
+        // otherwise sleep for a given time until the next check if wifi is offline and when it is
+        // get the process data usage, otherwise
         Thread mainProcess = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -77,12 +85,16 @@ public class MainService extends Service {
         return START_STICKY;
     }
 
+    // No binder for this service
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
         return null;
     }
 
+    // when the service is destroyed release the lock and delete the unique id related information
+    // NOTE: this does not work when the service is closed by operation system meaning I need to find a better
+    // and more reliable way to do this (maybe a daily check for unused values and delete them?)
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -92,6 +104,8 @@ public class MainService extends Service {
         }
     }
 
+    // checks if the wifi is offline and if it does allow the service to continue
+    // otherwise sleep until the next check (as of now its always false for testing purposes)
     public boolean checkIfWifiIsConnected() {
 //        ConnectivityManager manager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 //        if (manager != null) {
@@ -112,6 +126,9 @@ public class MainService extends Service {
         return false;
     }
 
+    // A function that checks if given process are running and if so create a specific Process instance for it,
+    // timer, thread to check it is still running and a timer task to display the notification to the user
+    // after a given time
     public void getAppDataUsage() {
         final ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
         if (manager != null) {

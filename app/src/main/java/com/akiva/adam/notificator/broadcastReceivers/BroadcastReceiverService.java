@@ -7,6 +7,7 @@ import android.util.Log;
 
 import com.akiva.adam.notificator.services.MainService;
 
+// receiver used after reboot action to restart the service automatically
 public class BroadcastReceiverService extends BroadcastReceiver {
 
     public static final String TAG = BroadcastReceiverService.class.getName();

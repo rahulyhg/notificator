@@ -2,6 +2,7 @@ package com.akiva.adam.notificator.activities;
 
 import android.support.v7.app.AppCompatActivity;
 
+// Base activity used for functions that all activities can use as well as defined strings for the entire program
 public class MyActivity extends AppCompatActivity {
 
     public static final String NOTIFICATION_RECEIVER = "notificationService";

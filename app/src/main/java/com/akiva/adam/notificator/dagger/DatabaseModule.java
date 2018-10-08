@@ -7,6 +7,7 @@ import javax.inject.Singleton;
 import dagger.Module;
 import dagger.Provides;
 
+// Database module to provide a singleton database instance for usage in the classes specified in the component
 @Module
 public class DatabaseModule {
 

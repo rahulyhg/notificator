@@ -7,6 +7,7 @@ import android.net.wifi.WifiManager;
 
 import static com.akiva.adam.notificator.activities.MyActivity.NOTIFICATION_RECEIVER;
 
+// receiver used when tapping the notification that activate the wifi if it is offline
 public class BroadcastReceiverNotification extends BroadcastReceiver {
 
     public static final String TAG = BroadcastReceiverNotification.class.getName();

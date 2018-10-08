@@ -5,6 +5,7 @@ import com.akiva.adam.notificator.interfaces.ILocks;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+// A singleton for a bunch of locks used to prevent race condition in different threads
 @Singleton
 public class Locks implements ILocks{
 

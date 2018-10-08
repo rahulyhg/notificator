@@ -15,6 +15,7 @@ import javax.inject.Inject;
 import static com.akiva.adam.notificator.activities.MyActivity.GOOGLE_CHROME;
 import static com.akiva.adam.notificator.activities.MyActivity.UNDEFINED;
 
+// A class the represent an active process in the phone
 public class Process implements IProcess {
 
     private final String uuid;  // unique id for device every reboot
@@ -102,6 +103,7 @@ public class Process implements IProcess {
         });
     }
 
+    // A function used only by the class itself to determine  a user readable app name for the notification
     private void checkAppName(String processName) {
         switch (processName) {
             case "com.android.chrome":

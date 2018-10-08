@@ -19,15 +19,15 @@ import static com.akiva.adam.notificator.activities.MyActivity.CHECK_TIME_THRESH
 import static com.akiva.adam.notificator.activities.MyActivity.NOTIFICATION_CHANNEL_ID;
 import static com.akiva.adam.notificator.activities.MyActivity.NOTIFICATION_RECEIVER;
 
+// A class used to send the user a notification about an app data usage
 public class Notification implements INotification{
 
     private final Context context;
-    private final Intent intent;
-    private final PendingIntent pendingIntent;
+    private final PendingIntent pendingIntent;  // The intent which responds to a user tap
     private final NotificationManager manager;
 
-    private static int count = 0;
-    private int id;
+    private static int count = 0;  // General counter for the notification
+    private int id;  // A specific id for each notification
 
 
     public static final String TAG = Notification.class.getName();
@@ -36,7 +36,7 @@ public class Notification implements INotification{
         this.context = context;
         manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         id = count++;
-        intent = new Intent(context, BroadcastReceiverNotification.class);
+        Intent intent = new Intent(context, BroadcastReceiverNotification.class);
         intent.setAction(NOTIFICATION_RECEIVER);
         pendingIntent = PendingIntent.getBroadcast(context, 0 , intent, 0);
     }
@@ -46,6 +46,8 @@ public class Notification implements INotification{
         return id;
     }
 
+    // A function to create new notification for the user about a parameter given app
+    // that pass the used data threshold and returns the notification
     @Override
     public NotificationCompat.Builder createNewNotification(IProcess process, int dataUsageInGivenTimeInMb) {
         // Had to use android builder class and not create my own because for some reason its a final class
@@ -66,6 +68,7 @@ public class Notification implements INotification{
         return mBuilder;
     }
 
+    // A function to remove the notification
     @Override
     public void removeNotification() {
         if (manager != null) {
@@ -75,6 +78,7 @@ public class Notification implements INotification{
         }
     }
 
+    // A static function to remove all notifications
     public static void removeAllNotifications(Context context) {
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         if (manager != null) {
@@ -84,6 +88,7 @@ public class Notification implements INotification{
         }
     }
 
+    // A static function for phones with version 26+ to create a notification channel
     public static void createNotificationChannel(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             CharSequence name = context.getString(R.string.channelName);

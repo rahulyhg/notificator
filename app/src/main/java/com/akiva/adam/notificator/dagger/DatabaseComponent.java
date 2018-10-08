@@ -8,6 +8,7 @@ import javax.inject.Singleton;
 
 import dagger.Component;
 
+// A module used by the app for the injection of the used modules to the given classes
 @Singleton
 @Component (modules = {DatabaseModule.class, LocksModule.class})
 public interface DatabaseComponent {
