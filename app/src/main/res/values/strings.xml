@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Notificator</string>
+    <string name="internetConnection">Internet Connection</string>
+    <string name="channelName">Notification channel name</string>
+    <string name="channelDesc">Notification channel desc</string>
+    <string name="notificationTitle">Alert for data usage</string>
+    <string name="notificationText">%1$s used %2$d mb in the last %3$d minutes, you might want to consider turning on wifi (tap the notification to turn it on)</string>
+</resources>
