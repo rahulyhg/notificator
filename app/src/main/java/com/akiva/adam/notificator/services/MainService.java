@@ -4,6 +4,8 @@ import android.app.ActivityManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
@@ -24,8 +26,13 @@ import java.util.UUID;
 
 import javax.inject.Inject;
 
+import static com.akiva.adam.notificator.activities.MyActivity.GOOGLE_CHROME_PROCESS_NAME;
+import static com.akiva.adam.notificator.activities.MyActivity.SLEEP_TIME_FOR_APP_DATA_USAGE_CHECK;
 import static com.akiva.adam.notificator.activities.MyActivity.SLEEP_TIME_FOR_WIFI_CHECK_CONNECTION;
 import static com.akiva.adam.notificator.activities.MyActivity.TIMER_TASK_CHECK_RATE;
+import static com.akiva.adam.notificator.activities.MyActivity.YOUTUBE_PROCESS_NAME;
+import static com.akiva.adam.notificator.activities.MyActivity.isAppStopped;
+import static com.akiva.adam.notificator.activities.MyActivity.isSystemApp;
 
 // A service that checks the data usage of indicated apps and if they pass
 // a given mobile data threshold display a notification for the user
@@ -62,24 +69,24 @@ public class MainService extends Service {
         Thread mainProcess = new Thread(new Runnable() {
             @Override
             public void run() {
+                mLocks.setServiceLock(true);
                 while (true) {
-                    if (!mLocks.getThreadLock() && !checkIfWifiIsConnected()) {
-                        mLocks.setServiceLock(true);
-                        getAppDataUsage();
-                        break;
-                    } else {
-                        try {
+                    try {
+                        if (!checkIfWifiIsConnected()) {
+                            getAppDataUsage();
+                            Thread.sleep(SLEEP_TIME_FOR_APP_DATA_USAGE_CHECK);
+                        } else {
                             Thread.sleep(SLEEP_TIME_FOR_WIFI_CHECK_CONNECTION);
-                        } catch (InterruptedException e) {
-                            mLocks.setThreadLock(false);
-                            Thread.currentThread().interrupt();
                         }
+                    } catch (InterruptedException e) {
+                        Log.d(TAG, TAG + ": " + e.getMessage());
+                        mLocks.setServiceLock(false);
+                        return;
                     }
                 }
             }
         });
         if (!mLocks.getServiceLock()) {
-            mLocks.setServiceLock(true);
             mainProcess.start();
         }
         return START_STICKY;
@@ -131,25 +138,24 @@ public class MainService extends Service {
     // after a given time
     public void getAppDataUsage() {
         final ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        final PackageManager packageManager = getPackageManager();
+        List<ApplicationInfo> appsInfo = packageManager.getInstalledApplications(PackageManager.GET_META_DATA);
         if (manager != null) {
-            List<ActivityManager.RunningAppProcessInfo> appsInfos = manager.getRunningAppProcesses();
-            for (final ActivityManager.RunningAppProcessInfo appInfo : appsInfos) {
-                if (uniqueId != null) {
-                    if (appInfo.processName.equals("com.android.chrome")) {
-                        final IProcess process = new Process(mDatabase, uniqueId, appInfo.uid, appInfo.processName);
-                        mLocks.setThreadLock(true);
+            for (ApplicationInfo appInfo : appsInfo) {
+                if (!isAppStopped(appInfo)) {
+                    if ((appInfo.processName.equals(GOOGLE_CHROME_PROCESS_NAME) || appInfo.processName.equals(YOUTUBE_PROCESS_NAME))
+                            || !isSystemApp(appInfo)) {
+                        final IProcess process = new Process(this, mDatabase, uniqueId, appInfo.uid, appInfo.processName);
                         final Timer timer = new Timer();
                         CheckIfProcessIsRunning checkIfProcessIsRunning = new CheckIfProcessIsRunning(this, process, timer);
                         CheckDataUsageThreshold checkThreshold = new CheckDataUsageThreshold(this, process);
                         timer.scheduleAtFixedRate(checkThreshold, TIMER_TASK_CHECK_RATE, TIMER_TASK_CHECK_RATE);
-                        checkIfProcessIsRunning.run();
+                        new Thread(checkIfProcessIsRunning).start();
                     }
-                } else {
-                    Log.d(TAG, TAG + ": uniqueId is null");
                 }
             }
         } else {
-            Log.d(TAG, TAG + ": Could not get Activity manager");
+            Log.d(TAG, TAG + ": uniqueId is null");
         }
     }
 }

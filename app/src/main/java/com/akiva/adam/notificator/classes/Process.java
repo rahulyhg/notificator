@@ -1,5 +1,8 @@
 package com.akiva.adam.notificator.classes;
 
+import android.content.Context;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.net.TrafficStats;
 import android.support.annotation.NonNull;
 import android.util.Log;
@@ -10,10 +13,13 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 
-import javax.inject.Inject;
+import java.util.List;
 
-import static com.akiva.adam.notificator.activities.MyActivity.GOOGLE_CHROME;
+import static com.akiva.adam.notificator.activities.MyActivity.GOOGLE_CHROME_APP_NAME;
+import static com.akiva.adam.notificator.activities.MyActivity.GOOGLE_CHROME_PROCESS_NAME;
 import static com.akiva.adam.notificator.activities.MyActivity.UNDEFINED;
+import static com.akiva.adam.notificator.activities.MyActivity.YOUTUBE_APP_NAME;
+import static com.akiva.adam.notificator.activities.MyActivity.YOUTUBE_PROCESS_NAME;
 
 // A class the represent an active process in the phone
 public class Process implements IProcess {
@@ -25,14 +31,18 @@ public class Process implements IProcess {
     private Long currentDataUsage;  // process current data usage
     private Long lastDataThreshold;  // last known process data usage (from database)
     private final DatabaseReference mDatabaseRef; // ref to the database
+    private final PackageManager packageManager;
+    private final List<ApplicationInfo> appsInfo;
 
     public static final String TAG = Process.class.getName();
 
-    public Process(@NonNull Database database, @NonNull final String uuid, final int uid, @NonNull final String processName) {
+    public Process(Context context, @NonNull Database database, @NonNull final String uuid, final int uid, @NonNull final String processName) {
+        packageManager = context.getPackageManager();
+        appsInfo = packageManager.getInstalledApplications(PackageManager.GET_META_DATA);
         this.uuid = uuid;
         this.uid = uid;
-        this.processName = processName.replaceAll("\\.", "-");
-        mDatabaseRef = database.getDatabaseService().getReference().child(uuid).child(this.processName);
+        this.processName = processName;
+        mDatabaseRef = database.getDatabaseService().getReference().child(uuid).child(processName.replaceAll("\\.", "-"));
         getLastDataThresholdFromDatabase();
         currentDataUsage = TrafficStats.getUidRxBytes(uid);
         checkAppName(processName);
@@ -77,7 +87,8 @@ public class Process implements IProcess {
     @Override
     public long getLastDataThreshold() {
         if (lastDataThreshold == null) {
-            return (TrafficStats.getUidRxBytes(uid));
+            lastDataThreshold = TrafficStats.getUidRxBytes(uid);
+            mDatabaseRef.setValue(lastDataThreshold);
         }
         return lastDataThreshold;
     }
@@ -88,10 +99,6 @@ public class Process implements IProcess {
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
                     lastDataThreshold = dataSnapshot.getValue(long.class);
-                } else {
-                    lastDataThreshold = (TrafficStats.getUidRxBytes(uid));
-                    mDatabaseRef.setValue(lastDataThreshold);
-                    Log.d(TAG, String.format(TAG, ": %s node does not exist", processName));
                 }
             }
 
@@ -105,13 +112,21 @@ public class Process implements IProcess {
 
     // A function used only by the class itself to determine  a user readable app name for the notification
     private void checkAppName(String processName) {
-        switch (processName) {
-            case "com.android.chrome":
-                appName = GOOGLE_CHROME;
-                break;
-            default:
-                appName = UNDEFINED;
-                break;
+        for (ApplicationInfo appInfo : appsInfo) {
+            if (processName.equals(appInfo.processName)) {
+                appName = appInfo.loadLabel(packageManager).toString();
+            }
         }
+//        switch (processName) {
+//            case GOOGLE_CHROME_PROCESS_NAME:
+//                appName = GOOGLE_CHROME_APP_NAME;
+//                break;
+//            case YOUTUBE_PROCESS_NAME:
+//                appName = YOUTUBE_APP_NAME;
+//                break;
+//            default:
+//                appName = UNDEFINED;
+//                break;
+//        }
     }
 }

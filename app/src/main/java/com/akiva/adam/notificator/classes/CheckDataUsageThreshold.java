@@ -33,5 +33,6 @@ public class CheckDataUsageThreshold extends TimerTask {
         } else {
             Log.d(TAG, String.format(TAG + ": App did not use above %d mb over %d minutes", (THRESHOLD_FOR_DATA_USAGE / 100000), CHECK_TIME_THRESHOLD));
         }
+        process.setLastDataThreshold(process.getCurrentDataUsage());
     }
 }
