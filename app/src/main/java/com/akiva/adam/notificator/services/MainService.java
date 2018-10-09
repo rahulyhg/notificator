@@ -143,8 +143,8 @@ public class MainService extends Service {
         if (manager != null) {
             for (ApplicationInfo appInfo : appsInfo) {
                 if (!isAppStopped(appInfo)) {
-                    if ((appInfo.processName.equals(GOOGLE_CHROME_PROCESS_NAME) || appInfo.processName.equals(YOUTUBE_PROCESS_NAME))
-                            || !isSystemApp(appInfo)) {
+                    if (((appInfo.processName.equals(GOOGLE_CHROME_PROCESS_NAME) || appInfo.processName.equals(YOUTUBE_PROCESS_NAME))
+                            || !isSystemApp(appInfo)) && !CheckIfProcessIsRunning.getRunningApplications().contains(appInfo.processName)) {
                         final IProcess process = new Process(this, mDatabase, uniqueId, appInfo.uid, appInfo.processName);
                         final Timer timer = new Timer();
                         CheckIfProcessIsRunning checkIfProcessIsRunning = new CheckIfProcessIsRunning(this, process, timer);

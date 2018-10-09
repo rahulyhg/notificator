@@ -13,13 +13,12 @@ public class MyActivity extends AppCompatActivity {
     public static final int SLEEP_TIME_FOR_WIFI_CHECK_CONNECTION = 30000;  // milliseconds
     public static final int SLEEP_TIME_FOR_APP_RUN_CHECK = 5000;  // milliseconds
     public static final int TIMER_TASK_CHECK_RATE = 120000;  // milliseconds
-    public static final int CHECK_TIME_THRESHOLD = 2;  // minutes
+    public static final int CHECK_TIME_THRESHOLD = 1;  // minutes
+
+    public static final int ONE_MEGA_BYTE_IN_BYTES = 1000000;
 
     public static final String GOOGLE_CHROME_PROCESS_NAME = "com.android.chrome";
-    public static final String GOOGLE_CHROME_APP_NAME = "Google Chrome";
     public static final String YOUTUBE_PROCESS_NAME = "com.android.youtube";
-    public static final String YOUTUBE_APP_NAME = "Youtube";
-    public static final String UNDEFINED = "Undefined";
 
     public static boolean isAppStopped(ApplicationInfo appInfo) {
         return ((appInfo.flags & ApplicationInfo.FLAG_STOPPED) != 0);

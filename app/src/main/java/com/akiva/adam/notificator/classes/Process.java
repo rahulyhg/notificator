@@ -13,13 +13,8 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.ArrayList;
 import java.util.List;
-
-import static com.akiva.adam.notificator.activities.MyActivity.GOOGLE_CHROME_APP_NAME;
-import static com.akiva.adam.notificator.activities.MyActivity.GOOGLE_CHROME_PROCESS_NAME;
-import static com.akiva.adam.notificator.activities.MyActivity.UNDEFINED;
-import static com.akiva.adam.notificator.activities.MyActivity.YOUTUBE_APP_NAME;
-import static com.akiva.adam.notificator.activities.MyActivity.YOUTUBE_PROCESS_NAME;
 
 // A class the represent an active process in the phone
 public class Process implements IProcess {
@@ -117,16 +112,5 @@ public class Process implements IProcess {
                 appName = appInfo.loadLabel(packageManager).toString();
             }
         }
-//        switch (processName) {
-//            case GOOGLE_CHROME_PROCESS_NAME:
-//                appName = GOOGLE_CHROME_APP_NAME;
-//                break;
-//            case YOUTUBE_PROCESS_NAME:
-//                appName = YOUTUBE_APP_NAME;
-//                break;
-//            default:
-//                appName = UNDEFINED;
-//                break;
-//        }
     }
 }

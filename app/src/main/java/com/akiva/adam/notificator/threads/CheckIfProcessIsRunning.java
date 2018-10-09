@@ -1,22 +1,19 @@
 package com.akiva.adam.notificator.threads;
 
-import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.net.TrafficStats;
 import android.util.Log;
 
-import com.akiva.adam.notificator.classes.Process;
+import com.akiva.adam.notificator.classes.Notification;
 import com.akiva.adam.notificator.interfaces.IProcess;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 
-import static com.akiva.adam.notificator.activities.MyActivity.GOOGLE_CHROME_PROCESS_NAME;
 import static com.akiva.adam.notificator.activities.MyActivity.SLEEP_TIME_FOR_APP_RUN_CHECK;
-import static com.akiva.adam.notificator.activities.MyActivity.YOUTUBE_PROCESS_NAME;
-import static com.akiva.adam.notificator.activities.MyActivity.isSystemApp;
 
 // An extension for Thread that checks the a specific process is still running while
 // checking for data usage threshold
@@ -26,15 +23,14 @@ public class CheckIfProcessIsRunning implements Runnable {
     private final PackageManager packageManager;
     private final List<ApplicationInfo> appsInfo;
     private final IProcess process;  // The process which is being checked if it's still running
-    private final ActivityManager activityManager;
     private final Timer timer;  // Timer to check the data usage threshold
+    private static final ArrayList<String> RUNNING_APPLICATIONS = new ArrayList<String>();
 
     public static final String TAG = CheckIfProcessIsRunning.class.getName();
 
     public CheckIfProcessIsRunning(Context context, IProcess process, Timer timer) {
         this.context = context;
         this.process = process;
-        activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
         this.timer = timer;
 
         packageManager = context.getPackageManager();
@@ -49,8 +45,10 @@ public class CheckIfProcessIsRunning implements Runnable {
                 // iterate over the process and check if the one of the desired process was found
                 for (final ApplicationInfo appInfo : appsInfo) {
                     // if it was break the loop
-                    if ((appInfo.processName.equals(GOOGLE_CHROME_PROCESS_NAME) || appInfo.processName.equals(YOUTUBE_PROCESS_NAME))
-                            || !isSystemApp(appInfo)) {
+                    if ((appInfo.processName.equals(process.getProcessName()))) {
+                        if (!RUNNING_APPLICATIONS.contains(process.getProcessName())) {
+                            RUNNING_APPLICATIONS.add(process.getProcessName());
+                        }
                         appFound = true;
                         break;
                     }
@@ -58,12 +56,17 @@ public class CheckIfProcessIsRunning implements Runnable {
                 // if the process was found set the current data usage accordingly
                 if (appFound) {
                     process.setCurrentDataUsage(TrafficStats.getUidRxBytes(process.getUid()));
-                    Log.d(TAG, String.format("%s: %s used %d additional bytes in the last 5 seconds", TAG, process.getAppName(), process.getCurrentDataUsage() - process.getLastDataThreshold()));
                     // if it was not found save the last known current data usage in the database for further use
                     // as well as canceling the timer
                 } else {
                     process.setLastDataThreshold(process.getCurrentDataUsage());
+                    Notification.getNotifications().remove(process.getProcessName());
                     timer.cancel();
+                    for (String runningApp : RUNNING_APPLICATIONS) {
+                        if (process.getProcessName().equals(runningApp)) {
+                            RUNNING_APPLICATIONS.remove(runningApp);
+                        }
+                    }
                     Thread.interrupted();
                 }
                 // Thread go to sleep for a given time and afterwards checks again
@@ -72,5 +75,9 @@ public class CheckIfProcessIsRunning implements Runnable {
                 return;
             }
         }
+    }
+
+    public static ArrayList<String> getRunningApplications() {
+        return RUNNING_APPLICATIONS;
     }
 }

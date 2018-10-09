@@ -15,6 +15,9 @@ import com.akiva.adam.notificator.broadcastReceivers.BroadcastReceiverNotificati
 import com.akiva.adam.notificator.interfaces.INotification;
 import com.akiva.adam.notificator.interfaces.IProcess;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+
 import static com.akiva.adam.notificator.activities.MyActivity.CHECK_TIME_THRESHOLD;
 import static com.akiva.adam.notificator.activities.MyActivity.NOTIFICATION_CHANNEL_ID;
 import static com.akiva.adam.notificator.activities.MyActivity.NOTIFICATION_RECEIVER;
@@ -29,15 +32,17 @@ public class Notification implements INotification{
     private static int count = 0;  // General counter for the notification
     private int id;  // A specific id for each notification
 
+    private static final HashMap<String, Integer> NOTIFICATIONS = new HashMap<String, Integer>();
+
 
     public static final String TAG = Notification.class.getName();
 
     public Notification(Context context) {
         this.context = context;
         manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        id = count++;
         Intent intent = new Intent(context, BroadcastReceiverNotification.class);
         intent.setAction(NOTIFICATION_RECEIVER);
+        id = count;
         pendingIntent = PendingIntent.getBroadcast(context, 0 , intent, 0);
     }
 
@@ -52,18 +57,27 @@ public class Notification implements INotification{
     public NotificationCompat.Builder createNewNotification(IProcess process, int dataUsageInGivenTimeInMb) {
         // Had to use android builder class and not create my own because for some reason its a final class
         // (meaning you can not extend it)
+        String text = context.getString(R.string.notificationText, process.getAppName(), dataUsageInGivenTimeInMb, CHECK_TIME_THRESHOLD);
+        String title = context.getString(R.string.notificationTitle);
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_alert_white)
-                .setContentTitle(context.getString(R.string.notificationTitle))
-                .setContentText(context.getString(R.string.notificationText, process.getAppName(), dataUsageInGivenTimeInMb, CHECK_TIME_THRESHOLD))
+                .setContentTitle(title)
+                .setContentText(text)
                 .setStyle(new NotificationCompat.BigTextStyle()
-                        .bigText(context.getString(R.string.notificationText, process.getAppName(), dataUsageInGivenTimeInMb, CHECK_TIME_THRESHOLD)))
+                        .bigText(text))
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true);
 
         NotificationManagerCompat managerCompat = NotificationManagerCompat.from(context);
-        managerCompat.notify(id, mBuilder.build());
+
+        if (NOTIFICATIONS.containsKey(process.getProcessName())) {
+            managerCompat.notify(NOTIFICATIONS.get(process.getProcessName()), mBuilder.build());
+        } else {
+            managerCompat.notify(id, mBuilder.build());
+            NOTIFICATIONS.put(process.getProcessName(), id);
+            count++;
+        }
 
         return mBuilder;
     }
@@ -101,5 +115,9 @@ public class Notification implements INotification{
                 manager.createNotificationChannel(channel);
             }
         }
+    }
+
+    public static HashMap<String, Integer> getNotifications() {
+        return NOTIFICATIONS;
     }
 }
